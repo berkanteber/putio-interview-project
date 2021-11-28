@@ -15,5 +15,7 @@ class NameClashError(CLIError):
         parent_id: int,
     ) -> None:
         super().__init__(
-            f"A file or folder with name `{name}` in `{parent_id}` already exists."
+            f"A file or folder with name `{name}` in `{parent_id}` already exists.\n\n"
+            "Run command with:\n"
+            "    `--name NAME` to upload with a different name\n"
         )
