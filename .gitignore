@@ -2,3 +2,5 @@
 **/venv/
 **/.tox/
 **/.mypy_cache/
+
+putio-cli/.env.secret
