@@ -13,11 +13,26 @@ from putio._types import PutioClient
 
 
 putio_client: PutioClient = putiopy.Client("")
+verbose: bool = False
+
+echo = typer.echo
+
+
+def vecho(msg: str) -> None:
+    """
+    Echoes only in verbose mode.
+
+    Arguments:
+        msg: Message to echo.
+    """
+    if verbose:
+        echo(msg)
 
 
 def upload_folder(
     source: Path,
     access_token: str,
+    verbosity: bool,
 ) -> None:
     """
     Uploads folder.
@@ -25,26 +40,28 @@ def upload_folder(
     Arguments:
         source: Path of the folder to upload.
         access_token: Access token.
+        verbosity: Boolean flag to denoting verbosity.
 
     Raises:
         NameClashError: A file or folder with the same exists.
         NameClashWithFileError: A file with the same name exists.
         UnknownAPIError: An unknown error occured.
     """
-    global putio_client  # pylint: disable=[global-statement,invalid-name]
+    global putio_client, verbose  # pylint: disable=[global-statement,invalid-name]
     putio_client = putiopy.Client(access_token, timeout=None)
+    verbose = verbosity
 
     source_id = create_folder(source.name, parent_id=0).id
     source_prefix = f"{source.parent}/"
 
-    typer.echo(f"Folder `{source.name}` is created.")
+    vecho(f"Folder `{source.name}` is created.")
 
     file_sizes = [path.stat().st_size for path in source.rglob("*") if path.is_file()]
     total_count, total_size = len(file_sizes), sum(file_sizes)
     total_size_human = human_size(total_size)
 
     if total_count:
-        typer.echo(f"Uploading {total_count} files ({total_size_human}).")
+        echo(f"Uploading {total_count} files ({total_size_human}).")
 
     dir_ids = {str(source): source_id}
     uploaded_count = uploaded_size = 0
@@ -55,7 +72,7 @@ def upload_folder(
             folder_id = create_folder(folder_name, parent_id=dir_ids[str(path)]).id
             dir_ids[str(folder_path)] = folder_id
 
-            typer.echo(f"Folder {folder_path.removeprefix(source_prefix)} is created.")
+            vecho(f"Folder {folder_path.removeprefix(source_prefix)} is created.")
 
         files.sort()
         for file_name in files:
@@ -65,8 +82,8 @@ def upload_folder(
             uploaded_count += 1
             uploaded_size += uploaded_file.size  # pylint: disable=[no-member]
 
-            typer.echo(f"File `{file_path.removeprefix(source_prefix)}` is uploaded.")
-            typer.echo(
+            vecho(f"File `{file_path.removeprefix(source_prefix)}` is uploaded.")
+            vecho(
                 f"Uploaded {uploaded_count} of {total_count} files "
                 f"({human_size(uploaded_size)} / {total_size_human})."
             )
@@ -75,7 +92,7 @@ def upload_folder(
     if total_count:
         files_str = f" ({total_count} files ({total_size_human}))"
 
-    typer.echo(f"Uploaded `{source.name}`{files_str}.")
+    echo(f"Uploaded `{source.name}`{files_str}.")
 
 
 def create_folder(name: str, *, parent_id: int) -> File:

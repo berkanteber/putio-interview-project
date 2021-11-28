@@ -72,6 +72,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         metavar="TOKEN",
         help="Use TOKEN as access token.",
     ),
+    verbose: bool = typer.Option(True, "--verbose/--quiet"),
 ) -> None:
     """
     Usage: python -m putio.cli upload [OPTIONS] FOLDER
@@ -83,6 +84,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
 
     Options:
         --token TOKEN           Use TOKEN as access token.
+        --verbose / --quiet     [default: verbose]
         --help                  Show this message and exit.
     """
     if token and putio.auth.verify_token(token):
@@ -96,7 +98,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         raise typer.Exit(1)
 
     try:
-        putio.core.upload_folder(source, access_token)
+        putio.core.upload_folder(source, access_token, verbose)
     except (typer.Abort, typer.Exit) as err:
         raise err
     except CLIError as err:
