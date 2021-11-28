@@ -35,6 +35,7 @@ def upload_folder(
     source: Path,
     target: Optional[str],
     name: str,
+    force: bool,
     access_token: str,
     verbosity: bool,
 ) -> None:
@@ -45,6 +46,7 @@ def upload_folder(
         source: Path of the folder to upload.
         target: Path to the location to upload file to. Default is root folder.
         name: Name assigned to the created folder. Default is the name of the source.
+        force: Boolean flag to replace existing folders with the same name.
         access_token: Access token.
         verbosity: Boolean flag to denoting verbosity.
 
@@ -59,7 +61,7 @@ def upload_folder(
 
     target_id = get_target_id(target)
 
-    source_id = create_folder(name, parent_id=target_id).id
+    source_id = create_folder(name, parent_id=target_id, force=force).id
     source_prefix = f"{source.parent}/"
 
     vecho(
@@ -144,19 +146,21 @@ def get_target_id(target: Optional[str]) -> int:
     return parent_id
 
 
-def create_folder(name: str, *, parent_id: int) -> File:
+def create_folder(name: str, *, parent_id: int, force: bool = False) -> File:
     """
     Creates a folder in the specified location.
 
     Arguments:
         name: Name of the folder to create.
         parent_id: Location to create folder in.
+        force: Boolean flag to replace existing folders with the same name.
 
     Returns:
         Created folder.
 
     Raises:
         NameClashError: A file or folder with the same exists.
+        NameClashWithFileError: A file with the same name exists.
         UnknownAPIError: An unknown error occured.
     """
     try:
@@ -167,7 +171,17 @@ def create_folder(name: str, *, parent_id: int) -> File:
                 context=f"Creating folder `{name}` in `{parent_id}`"
             ) from err
 
-        raise NameClashError(name, parent_id) from None
+        if not force:
+            raise NameClashError(name, parent_id) from None
+
+        existing = get_folder(name, parent_id=parent_id)
+
+        assert existing is not None
+        if existing.file_type != "FOLDER":
+            raise NameClashWithFileError(name, parent_id) from None
+
+        existing.delete()
+        folder = create_folder(name, parent_id=parent_id)
 
     return folder
 

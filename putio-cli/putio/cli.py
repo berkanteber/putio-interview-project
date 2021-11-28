@@ -77,6 +77,12 @@ def upload(  # pylint: disable=[missing-raises-doc]
         metavar="NAME",
         help="Upload FOLDER as NAME.",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Replace folders with the same name.",
+    ),
     token: Optional[str] = typer.Option(
         None,
         metavar="TOKEN",
@@ -95,6 +101,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
     Options:
         --target PATH           Upload FOLDER to PATH.
         --name NAME             Upload FOLDER as NAME.
+        -f, --force             Replace folders with the same name.
         --token TOKEN           Use TOKEN as access token.
         --verbose / --quiet     [default: verbose]
         --help                  Show this message and exit.
@@ -116,7 +123,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         name = source.name
 
     try:
-        putio.core.upload_folder(source, target, name, access_token, verbose)
+        putio.core.upload_folder(source, target, name, force, access_token, verbose)
     except (typer.Abort, typer.Exit) as err:
         raise err
     except CLIError as err:
