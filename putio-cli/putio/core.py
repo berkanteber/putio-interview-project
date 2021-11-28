@@ -2,11 +2,13 @@
 
 import os
 from pathlib import Path
+from typing import Optional
 
 import putiopy
 import typer
 
 from putio._errors import NameClashError
+from putio._errors import NameClashWithFileError
 from putio._errors import UnknownAPIError
 from putio._types import File
 from putio._types import PutioClient
@@ -31,15 +33,17 @@ def vecho(msg: str) -> None:
 
 def upload_folder(
     source: Path,
+    target: Optional[str],
     name: str,
     access_token: str,
     verbosity: bool,
 ) -> None:
     """
-    Uploads folder.
+    Uploads folder to the specified location.
 
     Arguments:
         source: Path of the folder to upload.
+        target: Path to the location to upload file to. Default is root folder.
         name: Name assigned to the created folder. Default is the name of the source.
         access_token: Access token.
         verbosity: Boolean flag to denoting verbosity.
@@ -53,10 +57,16 @@ def upload_folder(
     putio_client = putiopy.Client(access_token, timeout=None)
     verbose = verbosity
 
-    source_id = create_folder(name, parent_id=0).id
+    target_id = get_target_id(target)
+
+    source_id = create_folder(name, parent_id=target_id).id
     source_prefix = f"{source.parent}/"
 
-    vecho(f"Folder `{name}` is created.")
+    vecho(
+        f"Folder `{name}` is created at `{target}`."
+        if target
+        else f"Folder `{name}` is created at root folder."
+    )
 
     file_sizes = [path.stat().st_size for path in source.rglob("*") if path.is_file()]
     total_count, total_size = len(file_sizes), sum(file_sizes)
@@ -90,13 +100,48 @@ def upload_folder(
                 f"({human_size(uploaded_size)} / {total_size_human})."
             )
 
-    name_str = files_str = ""
+    target_str = name_str = files_str = ""
+    if target:
+        target_str = f" into `{target}`"
     if name != source.name:
         name_str = f" as `{name}`"
     if total_count:
         files_str = f" ({total_count} files ({total_size_human}))"
 
-    echo(f"Uploaded `{source.name}`{name_str}{files_str}.")
+    echo(f"Uploaded `{source.name}`{target_str}{name_str}{files_str}.")
+
+
+def get_target_id(target: Optional[str]) -> int:
+    """
+    Returns ID of the target folder.
+
+    Missing folders on path to target folder will be created if possible.
+
+    Arguments:
+        target: Path to target folder, or `None`.
+
+    Returns:
+        ID of the target folder.
+
+    Raises:
+        NameClashWithFileError: A file exists on the path to target.
+    """
+    if not target:
+        return 0
+
+    parent_id = 0
+    for path_component in target.split("/"):
+        try:
+            folder: Optional[File] = create_folder(path_component, parent_id=parent_id)
+        except NameClashError:
+            folder = get_folder(path_component, parent_id=parent_id)
+            if folder is None:
+                raise NameClashWithFileError(path_component, parent_id) from None
+
+        assert folder is not None
+        parent_id = folder.id
+
+    return parent_id
 
 
 def create_folder(name: str, *, parent_id: int) -> File:
@@ -125,6 +170,38 @@ def create_folder(name: str, *, parent_id: int) -> File:
         raise NameClashError(name, parent_id) from None
 
     return folder
+
+
+def get_folder(name: str, *, parent_id: int) -> Optional[File]:
+    """
+    Searchs for a folder in the specified location.
+
+    Arguments:
+        name: Folder name.
+        parent_id: Location to search for.
+
+    Returns:
+        When a match is found, returns matched folder.
+        Otherwise, returns `None`.
+
+    Raises:
+        UnknownAPIError: An unknown error occured.
+    """
+    try:
+        return next(
+            filter(
+                lambda f: f.name == name and f.file_type == "FOLDER",
+                putio_client.File.list(parent_id),
+            )
+        )
+    except StopIteration:
+        pass
+    except putiopy.APIError as err:
+        raise UnknownAPIError(
+            context=f"Getting folder `{name}` from `{parent_id}`"
+        ) from err
+
+    return None
 
 
 def upload_file(file_path: str, *, parent_id: int = 0) -> File:

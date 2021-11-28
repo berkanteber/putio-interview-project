@@ -67,6 +67,11 @@ def upload(  # pylint: disable=[missing-raises-doc]
         file_okay=False,
         metavar="FOLDER",
     ),
+    target: Optional[str] = typer.Option(
+        None,
+        metavar="PATH",
+        help="Upload FOLDER to PATH.",
+    ),
     name: Optional[str] = typer.Option(
         None,
         metavar="NAME",
@@ -88,6 +93,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         FOLDER  [required]
 
     Options:
+        --target PATH           Upload FOLDER to PATH.
         --name NAME             Upload FOLDER as NAME.
         --token TOKEN           Use TOKEN as access token.
         --verbose / --quiet     [default: verbose]
@@ -103,11 +109,14 @@ def upload(  # pylint: disable=[missing-raises-doc]
         )
         raise typer.Exit(1)
 
+    if target:
+        target = target.strip("/")
+
     if not name:
         name = source.name
 
     try:
-        putio.core.upload_folder(source, name, access_token, verbose)
+        putio.core.upload_folder(source, target, name, access_token, verbose)
     except (typer.Abort, typer.Exit) as err:
         raise err
     except CLIError as err:
