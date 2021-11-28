@@ -1,0 +1,4 @@
+**/__pycache__/
+**/venv/
+**/.tox/
+**/.mypy_cache/
