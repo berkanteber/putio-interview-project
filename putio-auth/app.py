@@ -92,5 +92,28 @@ def get_access_token():
     return access_token, 200
 
 
+@app.route("/create-access-token", methods=("POST",))
+def create_access_token():
+    """Creates access token for the user with username and password."""
+    try:
+        username = request.get_json()["username"]
+        password = request.get_json()["password"]
+    except KeyError:
+        return "Request must include `username` and `password` fields in its body.", 400
+
+    response = requests.put(
+        f"https://api.put.io/v2/oauth2/authorizations/clients/{CLIENT_ID}/",
+        data={"client_secret": CLIENT_SECRET},
+        auth=(username, password),
+    )
+
+    try:
+        access_token = json.loads(response.content.decode("utf-8"))["access_token"]
+    except Exception:
+        return "An unknown error occured.", 500
+
+    return access_token, 200
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT, debug=DEBUG)
