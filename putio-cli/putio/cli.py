@@ -37,6 +37,7 @@ CLIENT_SECRET = os.environ.get("PUTIO_CLIENT_SECRET")
 @app.command(
     help=(
         "Login to Put.io.\n\n"
+        "`--token` and `--prompt` options are mutually exclusive.\n\n"
         "When no option is given, OAuth 2.0 with Authorization Code flow will be used."
     )
 )
@@ -44,20 +45,32 @@ def login(  # pylint: disable=[missing-raises-doc]
     token: Optional[str] = typer.Option(
         None, metavar="TOKEN", help="Use TOKEN to login."
     ),
+    prompt: bool = typer.Option(
+        False, "--prompt", help="Ask for username and password, and use them to login."
+    ),
 ) -> None:
     """
     Usage: python -m putio.cli login [OPTIONS]
 
     Login to Put.io.
 
+    `--token` and `--prompt` options are mutually exclusive.
+
     When no option is given, OAuth 2.0 with Authorization Code flow will be used.
 
     Options:
         --token TOKEN           Use TOKEN to login.
+        --prompt                Ask for username and password, and use them to login.
         --help                  Show this message and exit.
     """
+    if token and prompt:
+        typer.echo("`--token` and `--prompt` options are mutually exclusive.")
+        raise typer.Exit(1)
+
     if token:
         access_token = token
+    elif prompt:
+        access_token = putio.auth.get_token_from_credentials(CLIENT_ID, CLIENT_SECRET)
     elif ACCESS_TOKEN and (username := putio.auth.verify_token(ACCESS_TOKEN)):
         typer.echo(f"You are already logged in as `{username}`.")
         raise typer.Exit()

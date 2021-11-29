@@ -85,6 +85,61 @@ def get_token_from_oauth() -> str:
     raise typer.Exit(1)
 
 
+def get_token_from_credentials(
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> str:
+    """
+    Gets token using Put.io app credentials and username & password.
+
+    If Put.io app credentials are not given, access token is obtained by
+    sending username and password to an external server and using its app credentials.
+
+    If username and password is not given, user is prompted for input.
+
+    Returns:
+        Access token.
+
+    Raises:
+        typer.Abort:
+            - Aborted during asking for username and password.
+        typer.Exit:
+            - An error occured in authorizarion server.
+            - An error occured while creating access token.
+    """
+    if not (client_id and client_secret):
+        username = typer.prompt("Username")
+        password = typer.prompt("Password", hide_input=True)
+
+        response = requests.post(
+            f"{APP_BASE_URL}/create-access-token",
+            json={"username": username, "password": password},
+        )
+
+        if response.status_code == 200:
+            access_token: str = response.text
+            return access_token
+
+        typer.echo("An error occured in authorization server.")
+        raise typer.Exit(1)
+
+    if not (username and password):
+        username = typer.prompt("Username")
+        password = typer.prompt("Password", hide_input=True)
+
+    try:
+        access_token = putiopy.create_access_token(
+            client_id, client_secret, username, password
+        )
+    except putiopy.APIError as err:
+        typer.echo("An error occured while creating access token.")
+        raise typer.Exit(1) from err
+
+    return access_token
+
+
 def verify_token(access_token: str) -> Optional[str]:
     """
     Verifies that access token is valid.
