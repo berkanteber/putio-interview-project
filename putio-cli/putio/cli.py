@@ -48,6 +48,9 @@ def login(  # pylint: disable=[missing-raises-doc]
     prompt: bool = typer.Option(
         False, "--prompt", help="Ask for username and password, and use them to login."
     ),
+    dont_save: bool = typer.Option(
+        False, "--dont-save", help="Don't save the access token, only print itå."
+    ),
 ) -> None:
     """
     Usage: python -m putio.cli login [OPTIONS]
@@ -61,6 +64,7 @@ def login(  # pylint: disable=[missing-raises-doc]
     Options:
         --token TOKEN           Use TOKEN to login.
         --prompt                Ask for username and password, and use them to login.
+        --dont-save             Don't save the access token, only print it.
         --help                  Show this message and exit.
     """
     if token and prompt:
@@ -80,6 +84,10 @@ def login(  # pylint: disable=[missing-raises-doc]
     if not access_token or not (username := putio.auth.verify_token(access_token)):
         typer.echo("User couldn't be authorized.")
         raise typer.Exit(1)
+
+    if dont_save:
+        typer.echo(f"Your access token for user `{username}` is `{access_token}`.")
+        raise typer.Exit()
 
     dotenv.set_key(".env.secret", "PUTIO_ACCESS_TOKEN", access_token)
     typer.echo(f"You've been successfully logged in as `{username}`.")
