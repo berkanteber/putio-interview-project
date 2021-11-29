@@ -1,0 +1,4 @@
+__pycache__
+.env.secret
+.env.secret.example
+venv
