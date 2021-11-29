@@ -124,7 +124,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         metavar="TOKEN",
         help="Use TOKEN as access token.",
     ),
-    verbose: bool = typer.Option(True, "--verbose/--quiet"),
+    verbose: bool = typer.Option(False, "--verbose/--quiet"),
 ) -> None:
     """
     Usage: python -m putio.cli upload [OPTIONS] FOLDER
@@ -139,7 +139,7 @@ def upload(  # pylint: disable=[missing-raises-doc]
         --name NAME             Upload FOLDER as NAME.
         -f, --force             Replace folders with the same name.
         --token TOKEN           Use TOKEN as access token.
-        --verbose / --quiet     [default: verbose]
+        --verbose / --quiet     [default: quiet]
         --help                  Show this message and exit.
     """
     if token and putio.auth.verify_token(token):
