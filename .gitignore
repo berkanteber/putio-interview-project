@@ -6,4 +6,5 @@
 **/.coverage_cache
 **/cov-html/
 
+putio-auth/.env.secret
 putio-cli/.env.secret

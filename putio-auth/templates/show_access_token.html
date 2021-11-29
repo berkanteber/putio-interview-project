@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Put.io App</title>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <meta name="title" content="Put.io App">
+        <meta name="description" content="Interview project by Berkan Teber">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&display=swap" rel="stylesheet">
+
+        <style>
+            body {
+                text-align: center;
+                font-family: 'JetBrains Mono', monospace;
+            }
+
+            #pre-text {
+                padding-top: 20vh;
+                font-size: normal;
+                font-weight: 100;
+            }
+
+            #token {
+                font-size: x-large;
+                font-weight: 400;
+                padding-bottom: 5vh;
+            }
+
+            #text {
+                font-size: normal;
+                font-weight: 100;
+            }
+
+            .pre {
+                font-size: small;
+            }
+        </style>
+    </head>
+    <body>
+        <p id="pre-text">Your access token is:</p>
+        <p id="token">{{access_token}}</p>
+        <p id="text">CLI app should automatically log you in.</p>
+        <p id="text">But in case it doesn't, you can login by running:</p>
+        <p><pre>python -m putio.cli login --token {{access_token}}</pre></p>
+    </body>
+<html>
