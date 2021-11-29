@@ -7,6 +7,7 @@ import dotenv
 import redis
 import requests
 from flask import Flask
+from flask import redirect
 from flask import render_template
 from flask import request
 
@@ -24,12 +25,19 @@ DEV = bool(os.environ.get("DEV", False))
 REDIRECT_BASE_URL = f"http://127.0.0.1:{PORT}" if DEV else os.environ["BASE_URL"]
 REDIRECT_URL = f"{REDIRECT_BASE_URL}/oauth-callback"
 
+HOME_URL = os.environ["HOME_URL"]
+
 REDIS_URL = os.environ["REDIS_URL"]
 REDIS_TIMEOUT = os.environ.get("REDIS_TIMEOUT", 300)
 
 db = redis.from_url(REDIS_URL, decode_responses=True)
 
 app = Flask(__name__)
+
+
+@app.route("/", methods=("GET",))
+def home():
+    return redirect(HOME_URL)
 
 
 @app.route("/oauth-callback", methods=("GET",))
