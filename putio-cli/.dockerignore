@@ -1,0 +1,12 @@
+__pycache__
+.pytest_cache
+.mypy_cache
+.coverage_cache
+.tox
+.git
+.gitignore
+.env.secret
+tox.ini
+venv
+cov-html
+tests
