@@ -26,11 +26,20 @@ from putio._errors import CLIError
 app = typer.Typer(add_completion=False)
 
 dotenv.load_dotenv(".env.secret")
+dotenv.load_dotenv(".env.shared")
+dotenv.load_dotenv(".env")
 
 ACCESS_TOKEN = os.environ.get("PUTIO_ACCESS_TOKEN")
+CLIENT_ID = os.environ.get("PUTIO_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("PUTIO_CLIENT_SECRET")
 
 
-@app.command(help="Login to Put.io.")
+@app.command(
+    help=(
+        "Login to Put.io.\n\n"
+        "When no option is given, OAuth 2.0 with Authorization Code flow will be used."
+    )
+)
 def login(  # pylint: disable=[missing-raises-doc]
     token: Optional[str] = typer.Option(
         None, metavar="TOKEN", help="Use TOKEN to login."
@@ -41,21 +50,27 @@ def login(  # pylint: disable=[missing-raises-doc]
 
     Login to Put.io.
 
+    When no option is given, OAuth 2.0 with Authorization Code flow will be used.
+
     Options:
         --token TOKEN           Use TOKEN to login.
         --help                  Show this message and exit.
     """
-    if token and (username := putio.auth.verify_token(token)):
-        dotenv.set_key(".env.secret", "PUTIO_ACCESS_TOKEN", token)
-        typer.echo(f"You've been successfully logged in as `{username}`.")
-        raise typer.Exit()
-
-    if ACCESS_TOKEN and (username := putio.auth.verify_token(ACCESS_TOKEN)):
+    if token:
+        access_token = token
+    elif ACCESS_TOKEN and (username := putio.auth.verify_token(ACCESS_TOKEN)):
         typer.echo(f"You are already logged in as `{username}`.")
         raise typer.Exit()
+    else:
+        access_token = putio.auth.get_token_from_oauth()
 
-    typer.echo("User couldn't be authorized.")
-    raise typer.Exit(1)
+    if not access_token or not (username := putio.auth.verify_token(access_token)):
+        typer.echo("User couldn't be authorized.")
+        raise typer.Exit(1)
+
+    dotenv.set_key(".env.secret", "PUTIO_ACCESS_TOKEN", access_token)
+    typer.echo(f"You've been successfully logged in as `{username}`.")
+    raise typer.Exit()
 
 
 @app.command(help="Upload FOLDER to Put.io.", no_args_is_help=True)
