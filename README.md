@@ -1,3 +1,15 @@
+> **NOTE: This project is now archived!**
+>
+> This means:
+> - Authorization server is no more deployed.
+> - Once provided client ID is no longer valid.
+>
+> To make it work:
+> - Create an app in Put.io from [here](https://app.put.io/settings/account/oauth/apps/new).
+> - Put the client ID for your Put.io app in `.env.shared` in `putio-cli`.
+> - Put the access token for your Put.io app in `.env.secret` in `putio-cli`.
+> - You don't need the authorization server if you already have access token.
+
 # Put.io Interview Project
 
 This project consists of 2 apps:
